@@ -5,16 +5,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Image,
-    RefreshControl,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { fetchMeals } from '../../lib/supabase';
 
@@ -123,7 +123,7 @@ export default function FeedScreen() {
         end={{ x: 1, y: 0 }}
         style={styles.header}
       >
-        <Text style={styles.appName}>NutriMind</Text>
+        <Text style={styles.appName}>NutriMindd</Text>
         <TouchableOpacity style={styles.notificationButton}>
           <IconSymbol name="bell" size={24} color="#FFFFFF" />
         </TouchableOpacity>
