@@ -1,15 +1,13 @@
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
     Alert,
     Image,
-    ScrollView,
     StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 
 interface UserStats {
@@ -169,102 +167,66 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      
-      {/* Header */}
-      <LinearGradient
-        colors={['#FF6B6B', '#4ECDC4']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.header}
-      >
-        <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>Profile</Text>
-          <TouchableOpacity onPress={handleSettingsPress}>
-            <IconSymbol name="gearshape.fill" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Info */}
-        <View style={styles.profileSection}>
-          <View style={styles.profileHeader}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=face' }}
-              style={styles.profileAvatar}
-            />
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>Alex Johnson</Text>
-              <Text style={styles.profileBio}>
-                🏋️‍♂️ Fitness enthusiast | 🥗 Nutrition lover | 📈 Tracking my journey
-              </Text>
-              <View style={styles.streakContainer}>
-                <IconSymbol name="flame.fill" size={16} color="#FF6B6B" />
-                <Text style={styles.streakText}>{userStats.streak} day streak!</Text>
-              </View>
+      <StatusBar barStyle="dark-content" />
+      {/* Profile Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Profile</Text>
+        <TouchableOpacity onPress={handleSettingsPress}>
+          <IconSymbol name="gear" size={24} color="#64748B" />
+        </TouchableOpacity>
+      </View>
+      {/* Profile Info */}
+      <View style={styles.profileSection}>
+        <View style={styles.profileHeader}>
+          <Image
+            source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face' }}
+            style={styles.profileAvatar}
+          />
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName}>Chef Ernesto Gray</Text>
+            <Text style={styles.profileBio}>Passionate about healthy eating and sharing delicious recipes. Let’s fuel our bodies right!</Text>
+            <View style={styles.streakContainer}>
+              <IconSymbol name="flame.fill" size={16} color="#FF6B6B" />
+              <Text style={styles.streakText}>Streak: {userStats.streak} days</Text>
             </View>
           </View>
-
-          {/* Stats */}
-          <View style={styles.statsContainer}>
-            {renderStatCard('Posts', userStats.posts)}
-            {renderStatCard('Followers', userStats.followers, handleFollowersPress)}
-            {renderStatCard('Following', userStats.following, handleFollowingPress)}
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
-              <Text style={styles.editButtonText}>Edit Profile</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.shareButton}>
-              <IconSymbol name="square.and.arrow.up" size={16} color="#FF6B6B" />
-            </TouchableOpacity>
-          </View>
         </View>
-
-        {/* Tab Selection */}
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tab, selectedTab === 'posts' && styles.tabActive]}
-            onPress={() => setSelectedTab('posts')}
-          >
-            <IconSymbol 
-              name="square.grid.3x3.fill" 
-              size={16} 
-              color={selectedTab === 'posts' ? '#FF6B6B' : '#64748B'} 
-            />
-            <Text style={[styles.tabText, selectedTab === 'posts' && styles.tabTextActive]}>
-              Posts
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, selectedTab === 'achievements' && styles.tabActive]}
-            onPress={() => setSelectedTab('achievements')}
-          >
-            <IconSymbol 
-              name="trophy.fill" 
-              size={16} 
-              color={selectedTab === 'achievements' ? '#FF6B6B' : '#64748B'} 
-            />
-            <Text style={[styles.tabText, selectedTab === 'achievements' && styles.tabTextActive]}>
-              Achievements
-            </Text>
+        <View style={styles.profileActions}>
+          <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
+            <Text style={styles.editProfileText}>Edit Profile</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Content */}
-        {selectedTab === 'posts' ? (
-          <View style={styles.postsGrid}>
-            {recentMeals.map(renderMealPost)}
-          </View>
-        ) : (
-          <View style={styles.achievementsContainer}>
-            {achievements.map(renderAchievement)}
-          </View>
-        )}
-      </ScrollView>
+        <View style={styles.statsRow}>
+          {renderStatCard('Posts', userStats.posts)}
+          {renderStatCard('Followers', userStats.followers, handleFollowersPress)}
+          {renderStatCard('Following', userStats.following, handleFollowingPress)}
+        </View>
+      </View>
+      {/* Tabs */}
+      <View style={styles.tabsRow}>
+        <TouchableOpacity
+          style={[styles.tabButton, selectedTab === 'posts' && styles.tabButtonActive]}
+          onPress={() => setSelectedTab('posts')}
+        >
+          <Text style={[styles.tabText, selectedTab === 'posts' && styles.tabTextActive]}>Posts</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, selectedTab === 'achievements' && styles.tabButtonActive]}
+          onPress={() => setSelectedTab('achievements')}
+        >
+          <Text style={[styles.tabText, selectedTab === 'achievements' && styles.tabTextActive]}>Achievements</Text>
+        </TouchableOpacity>
+      </View>
+      {/* Tab Content */}
+      {selectedTab === 'posts' ? (
+        <View style={styles.mealsGrid}>
+          {recentMeals.map(renderMealPost)}
+        </View>
+      ) : (
+        <View style={styles.achievementsList}>
+          {achievements.map(renderAchievement)}
+        </View>
+      )}
     </View>
   );
 }
@@ -278,8 +240,6 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 20,
-  },
-  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -287,10 +247,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  content: {
-    flex: 1,
+    color: '#1E293B',
   },
   profileSection: {
     backgroundColor: '#FFFFFF',
@@ -333,19 +290,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FF6B6B',
     fontWeight: '600',
-    marginLeft: 5,
+    marginLeft: 6,
   },
-  statsContainer: {
+  profileActions: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
+    justifyContent: 'flex-end',
+    marginBottom: 10,
+  },
+  editProfileButton: {
+    backgroundColor: '#4ECDC4',
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 18,
+  },
+  editProfileText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
   },
   statCard: {
     alignItems: 'center',
     flex: 1,
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1E293B',
   },
@@ -354,106 +327,85 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginTop: 2,
   },
-  actionButtons: {
+  tabsRow: {
     flexDirection: 'row',
-    gap: 10,
-  },
-  editButton: {
-    flex: 1,
-    backgroundColor: '#F1F5F9',
-    paddingVertical: 12,
+    backgroundColor: '#E2E8F0',
     borderRadius: 20,
-    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 10,
+    overflow: 'hidden',
   },
-  editButtonText: {
-    fontSize: 14,
-    color: '#334155',
-    fontWeight: '600',
-  },
-  shareButton: {
-    width: 44,
-    height: 44,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
+  tabButton: {
+    flex: 1,
     paddingVertical: 10,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 20,
   },
-  tabActive: {
-    backgroundColor: '#FEF2F2',
+  tabButtonActive: {
+    backgroundColor: '#4ECDC4',
   },
   tabText: {
     fontSize: 14,
     color: '#64748B',
-    marginLeft: 8,
-    fontWeight: '500',
-  },
-  tabTextActive: {
-    color: '#FF6B6B',
     fontWeight: '600',
   },
-  postsGrid: {
+  tabTextActive: {
+    color: '#FFFFFF',
+  },
+  mealsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: 10,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginTop: 10,
   },
   mealPost: {
-    width: '33.33%',
+    width: '30%',
     aspectRatio: 1,
-    padding: 2,
+    marginBottom: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F1F5F9',
   },
   mealImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 8,
+    resizeMode: 'cover',
   },
   mealOverlay: {
-    position: 'absolute',
-    top: 2,
-    left: 2,
-    right: 2,
-    bottom: 2,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderRadius: 8,
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.15)',
     justifyContent: 'flex-end',
-    padding: 8,
+    alignItems: 'flex-end',
+    padding: 6,
   },
   mealStats: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
   mealLikes: {
     color: '#FFFFFF',
     fontSize: 12,
     marginLeft: 4,
-    fontWeight: '600',
   },
-  achievementsContainer: {
-    padding: 20,
+  achievementsList: {
+    paddingHorizontal: 20,
+    marginTop: 10,
   },
   achievementCard: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    padding: 15,
     borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
     elevation: 2,
   },
   achievementIcon: {
@@ -462,24 +414,24 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 16,
   },
   achievementInfo: {
     flex: 1,
   },
   achievementTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#1E293B',
-    marginBottom: 4,
   },
   achievementDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#64748B',
-    marginBottom: 4,
+    marginTop: 2,
   },
   achievementTime: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#94A3B8',
+    marginTop: 4,
   },
 });

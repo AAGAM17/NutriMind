@@ -1,113 +1,78 @@
+import { CustomButton } from '@/components/CustomButton';
+import { HelloWave } from '@/components/HelloWave';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
-  Image,
-  RefreshControl,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    RefreshControl,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-
-interface MealPost {
-  id: string;
-  user: {
-    name: string;
-    avatar: string;
-    isVerified: boolean;
-  };
-  image: string;
-  description: string;
-  nutrition: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  };
-  likes: number;
-  comments: number;
-  timeAgo: string;
-  tags: string[];
-}
-
-const mockPosts: MealPost[] = [
-  {
-    id: '1',
-    user: {
-      name: 'Chef Ernesto Gray',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-      isVerified: true,
-    },
-    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop',
-    description: 'Classic Grilled Chicken Quinoa Bowl With Asparagus 🔥 Perfect post-workout meal!',
-    nutrition: {
-      calories: 551,
-      protein: 45,
-      carbs: 32,
-      fat: 18,
-    },
-    likes: 234,
-    comments: 18,
-    timeAgo: '2h',
-    tags: ['#HealthyEating', '#PostWorkout', '#HighProtein'],
-  },
-  {
-    id: '2',
-    user: {
-      name: 'Sarah Johnson',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b88ce0c6?w=100&h=100&fit=crop&crop=face',
-      isVerified: false,
-    },
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop',
-    description: 'Avocado toast with perfectly poached egg 🥑✨ Started my morning right!',
-    nutrition: {
-      calories: 420,
-      protein: 16,
-      carbs: 28,
-      fat: 24,
-    },
-    likes: 156,
-    comments: 12,
-    timeAgo: '4h',
-    tags: ['#Breakfast', '#Avocado', '#Healthy'],
-  },
-];
+import { fetchMeals } from '../../lib/supabase';
 
 export default function FeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [meals, setMeals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const loadMeals = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchMeals();
+      console.log('Fetched meals:', data);
+      setMeals(data || []);
+    } catch (e: any) {
+      setError(e.message || 'Failed to load meals');
+      setMeals([]);
+      console.error('Error fetching meals:', e);
+    } finally {
+      setLoading(false);
+      console.log('Loading set to false');
+    }
+  };
+
+  useEffect(() => {
+    loadMeals();
+  }, []);
+
+  useEffect(() => {
+    console.log('Meals data:', meals);
+  }, [meals]);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 2000);
+    loadMeals().finally(() => setRefreshing(false));
   }, []);
 
   const renderNutritionBadge = (label: string, value: number, unit: string, color: string) => (
-    <View style={[styles.nutritionBadge, { backgroundColor: color }]}>
+    <View style={[styles.nutritionBadge, { backgroundColor: color }]}> 
       <Text style={styles.nutritionValue}>{value}{unit}</Text>
       <Text style={styles.nutritionLabel}>{label}</Text>
     </View>
   );
 
-  const renderPost = (post: MealPost) => (
+  const renderPost = (post: any) => (
     <View key={post.id} style={styles.postContainer}>
       {/* User Header */}
       <View style={styles.userHeader}>
-        <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
+        <Image source={{ uri: post.users?.avatar_url || '' }} style={styles.avatar} />
         <View style={styles.userInfo}>
           <View style={styles.userNameRow}>
-            <Text style={styles.userName}>{post.user.name}</Text>
-            {post.user.isVerified && (
-              <IconSymbol name="checkmark.seal.fill" size={16} color="#3B82F6" />
-            )}
+            <Text style={styles.userName}>{post.users?.name || 'Unknown'}</Text>
           </View>
-          <Text style={styles.timeAgo}>{post.timeAgo}</Text>
+          <Text style={styles.timeAgo}>{post.created_at ? new Date(post.created_at).toLocaleString() : ''}</Text>
         </View>
         <TouchableOpacity style={styles.moreButton}>
           <IconSymbol name="ellipsis" size={20} color="#64748B" />
@@ -115,25 +80,25 @@ export default function FeedScreen() {
       </View>
 
       {/* Meal Image */}
-      <Image source={{ uri: post.image }} style={styles.mealImage} />
+      <Image source={{ uri: post.image_url || '' }} style={styles.mealImage} />
 
       {/* Nutrition Info */}
       <View style={styles.nutritionContainer}>
-        {renderNutritionBadge('Protein', post.nutrition.protein, 'g', '#FF6B6B')}
-        {renderNutritionBadge('Fat', post.nutrition.fat, 'g', '#4ECDC4')}
-        {renderNutritionBadge('Carbs', post.nutrition.carbs, 'g', '#45B7D1')}
-        {renderNutritionBadge('Calories', post.nutrition.calories, '', '#FFA726')}
+        {renderNutritionBadge('Protein', post.protein, 'g', '#FF6B6B')}
+        {renderNutritionBadge('Fat', post.fat, 'g', '#4ECDC4')}
+        {renderNutritionBadge('Carbs', post.carbs, 'g', '#45B7D1')}
+        {renderNutritionBadge('Calories', post.calories, '', '#FFA726')}
       </View>
 
       {/* Post Actions */}
       <View style={styles.postActions}>
         <TouchableOpacity style={styles.actionButton}>
           <IconSymbol name="heart" size={24} color="#FF6B6B" />
-          <Text style={styles.actionText}>{post.likes}</Text>
+          <Text style={styles.actionText}>0</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <IconSymbol name="message" size={24} color="#64748B" />
-          <Text style={styles.actionText}>{post.comments}</Text>
+          <Text style={styles.actionText}>0</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <IconSymbol name="paperplane" size={24} color="#64748B" />
@@ -145,20 +110,12 @@ export default function FeedScreen() {
 
       {/* Post Description */}
       <Text style={styles.postDescription}>{post.description}</Text>
-      
-      {/* Tags */}
-      <View style={styles.tagsContainer}>
-        {post.tags.map((tag, index) => (
-          <Text key={index} style={styles.tag}>{tag}</Text>
-        ))}
-      </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      
       {/* Header */}
       <LinearGradient
         colors={['#FF6B6B', '#4ECDC4']}
@@ -171,7 +128,17 @@ export default function FeedScreen() {
           <IconSymbol name="bell" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </LinearGradient>
-
+      {/* Animated Hello Wave Greeting */}
+      <HelloWave />
+      {/* Login / Sign Up Button */}
+      <View style={{ marginHorizontal: 16, marginTop: 16 }}>
+        <CustomButton
+          title="Login / Sign Up"
+          onPress={() => router.push('./signin')}
+          icon="person.fill"
+          size="large"
+        />
+      </View>
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <IconSymbol name="magnifyingglass" size={20} color="#64748B" />
@@ -183,17 +150,25 @@ export default function FeedScreen() {
           onChangeText={setSearchText}
         />
       </View>
-
       {/* Feed */}
-      <ScrollView
-        style={styles.feed}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        {mockPosts.map(renderPost)}
-      </ScrollView>
+      {error && (
+        <Text style={{ color: 'red', textAlign: 'center', marginTop: 32 }}>{error}</Text>
+      )}
+      {loading && !error ? (
+        <ActivityIndicator size="large" color="#FF6B6B" style={{ marginTop: 32 }} />
+      ) : !error && meals.length === 0 ? (
+        <Text style={{ textAlign: 'center', marginTop: 32 }}>No meals found.</Text>
+      ) : !error && (
+        <ScrollView
+          style={styles.feed}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          {meals.map(renderPost)}
+        </ScrollView>
+      )}
     </View>
   );
 }

@@ -11,11 +11,15 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@clerk/clerk-expo": "^2.14.7",
+    "@clerk/clerk-react": "^5.35.2",
     "@expo/vector-icons": "^14.1.0",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
+    "@supabase/supabase-js": "^2.52.0",
     "expo": "~53.0.17",
+    "expo-auth-session": "^6.2.1",
     "expo-blur": "~14.1.5",
     "expo-camera": "^16.1.10",
     "expo-constants": "~17.1.7",
