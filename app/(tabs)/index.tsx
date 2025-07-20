@@ -1,16 +1,16 @@
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+  FlatList,
   Image,
   RefreshControl,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 interface MealPost {
@@ -32,6 +32,8 @@ interface MealPost {
   comments: number;
   timeAgo: string;
   tags: string[];
+  isLiked: boolean;
+  isSaved: boolean;
 }
 
 const mockPosts: MealPost[] = [
@@ -54,60 +56,114 @@ const mockPosts: MealPost[] = [
     comments: 18,
     timeAgo: '2h',
     tags: ['#HealthyEating', '#PostWorkout', '#HighProtein'],
+    isLiked: false,
+    isSaved: false,
   },
   {
     id: '2',
     user: {
       name: 'Sarah Johnson',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b88ce0c6?w=100&h=100&fit=crop&crop=face',
+      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop&crop=face',
       isVerified: false,
     },
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop',
-    description: 'Avocado toast with perfectly poached egg 🥑✨ Started my morning right!',
+    image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=300&fit=crop',
+    description: 'Delicious Vegan Quinoa Salad with Avocado and Tomatoes 🌱',
     nutrition: {
-      calories: 420,
-      protein: 16,
-      carbs: 28,
-      fat: 24,
+      calories: 320,
+      protein: 12,
+      carbs: 45,
+      fat: 10,
     },
-    likes: 156,
-    comments: 12,
-    timeAgo: '4h',
-    tags: ['#Breakfast', '#Avocado', '#Healthy'],
+    likes: 150,
+    comments: 10,
+    timeAgo: '1h',
+    tags: ['#Vegan', '#Quinoa', '#Healthy'],
+    isLiked: false,
+    isSaved: false,
+  },
+  {
+    id: '3',
+    user: {
+      name: 'Mike Anderson',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
+      isVerified: true,
+    },
+    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=300&fit=crop',
+    description: 'Grilled Salmon with Sweet Potato and Asparagus 🍣',
+    nutrition: {
+      calories: 450,
+      protein: 30,
+      carbs: 20,
+      fat: 15,
+    },
+    likes: 180,
+    comments: 15,
+    timeAgo: '30m',
+    tags: ['#Salmon', '#Healthy', '#HighProtein'],
+    isLiked: false,
+    isSaved: false,
   },
 ];
 
 export default function FeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [posts, setPosts] = useState<MealPost[]>(mockPosts);
 
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
       setRefreshing(false);
     }, 2000);
   }, []);
 
-  const renderNutritionBadge = (label: string, value: number, unit: string, color: string) => (
-    <View style={[styles.nutritionBadge, { backgroundColor: color }]}>
-      <Text style={styles.nutritionValue}>{value}{unit}</Text>
-      <Text style={styles.nutritionLabel}>{label}</Text>
-    </View>
+  const handleLike = useCallback((postId: string) => {
+    setPosts(prevPosts => 
+      prevPosts.map(post => 
+        post.id === postId 
+          ? { 
+              ...post, 
+              isLiked: !post.isLiked,
+              likes: post.isLiked ? post.likes - 1 : post.likes + 1
+            } 
+          : post
+      )
+    );
+  }, []);
+
+  const handleSave = useCallback((postId: string) => {
+    setPosts(prevPosts => 
+      prevPosts.map(post => 
+        post.id === postId 
+          ? { ...post, isSaved: !post.isSaved } 
+          : post
+      )
+    );
+  }, []);
+
+  const renderNutritionBadge = useCallback(
+    (label: string, value: number, unit: string, color: string) => (
+      <View style={[styles.nutritionBadge, { backgroundColor: color }]}>
+        <Text style={styles.nutritionValue}>{value}{unit}</Text>
+        <Text style={styles.nutritionLabel}>{label}</Text>
+      </View>
+    ),
+    []
   );
 
-  const renderPost = (post: MealPost) => (
-    <View key={post.id} style={styles.postContainer}>
+  const renderPost = useCallback(({ item }: { item: MealPost }) => (
+    <View style={styles.postContainer}>
       {/* User Header */}
       <View style={styles.userHeader}>
-        <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
+        <Image source={{ uri: item.user.avatar }} style={styles.avatar} />
         <View style={styles.userInfo}>
           <View style={styles.userNameRow}>
-            <Text style={styles.userName}>{post.user.name}</Text>
-            {post.user.isVerified && (
+            <Text style={styles.userName}>{item.user.name}</Text>
+            {item.user.isVerified && (
               <IconSymbol name="checkmark.seal.fill" size={16} color="#3B82F6" />
             )}
           </View>
-          <Text style={styles.timeAgo}>{post.timeAgo}</Text>
+          <Text style={styles.timeAgo}>{item.timeAgo}</Text>
         </View>
         <TouchableOpacity style={styles.moreButton}>
           <IconSymbol name="ellipsis" size={20} color="#64748B" />
@@ -115,45 +171,61 @@ export default function FeedScreen() {
       </View>
 
       {/* Meal Image */}
-      <Image source={{ uri: post.image }} style={styles.mealImage} />
+      <Image source={{ uri: item.image }} style={styles.mealImage} />
 
       {/* Nutrition Info */}
       <View style={styles.nutritionContainer}>
-        {renderNutritionBadge('Protein', post.nutrition.protein, 'g', '#FF6B6B')}
-        {renderNutritionBadge('Fat', post.nutrition.fat, 'g', '#4ECDC4')}
-        {renderNutritionBadge('Carbs', post.nutrition.carbs, 'g', '#45B7D1')}
-        {renderNutritionBadge('Calories', post.nutrition.calories, '', '#FFA726')}
+        {renderNutritionBadge('Protein', item.nutrition.protein, 'g', '#FF6B6B')}
+        {renderNutritionBadge('Fat', item.nutrition.fat, 'g', '#4ECDC4')}
+        {renderNutritionBadge('Carbs', item.nutrition.carbs, 'g', '#45B7D1')}
+        {renderNutritionBadge('Calories', item.nutrition.calories, '', '#FFA726')}
       </View>
 
       {/* Post Actions */}
       <View style={styles.postActions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <IconSymbol name="heart" size={24} color="#FF6B6B" />
-          <Text style={styles.actionText}>{post.likes}</Text>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => handleLike(item.id)}
+        >
+          <IconSymbol 
+            name={item.isLiked ? "heart.fill" : "heart"} 
+            size={24} 
+            color={item.isLiked ? "#FF6B6B" : "#64748B"} 
+          />
+          <Text style={styles.actionText}>{item.likes}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <IconSymbol name="message" size={24} color="#64748B" />
-          <Text style={styles.actionText}>{post.comments}</Text>
+          <Text style={styles.actionText}>{item.comments}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <IconSymbol name="paperplane" size={24} color="#64748B" />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.saveButton]}>
-          <IconSymbol name="bookmark" size={24} color="#64748B" />
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.saveButton]}
+          onPress={() => handleSave(item.id)}
+        >
+          <IconSymbol 
+            name={item.isSaved ? "bookmark.fill" : "bookmark"} 
+            size={24} 
+            color="#64748B" 
+          />
         </TouchableOpacity>
       </View>
 
       {/* Post Description */}
-      <Text style={styles.postDescription}>{post.description}</Text>
+      <Text style={styles.postDescription}>{item.description}</Text>
       
       {/* Tags */}
       <View style={styles.tagsContainer}>
-        {post.tags.map((tag, index) => (
-          <Text key={index} style={styles.tag}>{tag}</Text>
+        {item.tags.map((tag, index) => (
+          <TouchableOpacity key={index}>
+            <Text style={styles.tag}>{tag}</Text>
+          </TouchableOpacity>
         ))}
       </View>
     </View>
-  );
+  ), []);
 
   return (
     <View style={styles.container}>
@@ -169,6 +241,7 @@ export default function FeedScreen() {
         <Text style={styles.appName}>NutriMind</Text>
         <TouchableOpacity style={styles.notificationButton}>
           <IconSymbol name="bell" size={24} color="#FFFFFF" />
+          <View style={styles.notificationBadge} />
         </TouchableOpacity>
       </LinearGradient>
 
@@ -181,19 +254,23 @@ export default function FeedScreen() {
           placeholderTextColor="#94A3B8"
           value={searchText}
           onChangeText={setSearchText}
+          returnKeyType="search"
         />
       </View>
 
       {/* Feed */}
-      <ScrollView
-        style={styles.feed}
+      <FlatList
+        data={posts}
+        renderItem={renderPost}
+        keyExtractor={(item) => item.id}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         showsVerticalScrollIndicator={false}
-      >
-        {mockPosts.map(renderPost)}
-      </ScrollView>
+        contentContainerStyle={styles.feedContent}
+        ListHeaderComponent={<View style={styles.listHeader} />}
+        ListFooterComponent={<View style={styles.listFooter} />}
+      />
     </View>
   );
 }
@@ -215,9 +292,20 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    fontFamily: 'Inter_700Bold',
   },
   notificationButton: {
     padding: 8,
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFD700',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -238,19 +326,29 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 16,
     color: '#1E293B',
+    fontFamily: 'Inter_400Regular',
   },
-  feed: {
-    flex: 1,
+  feedContent: {
+    paddingBottom: 16,
+  },
+  listHeader: {
+    height: 8,
+  },
+  listFooter: {
+    height: 32,
   },
   postContainer: {
     backgroundColor: '#FFFFFF',
     marginBottom: 16,
     paddingBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   userHeader: {
     flexDirection: 'row',
@@ -275,11 +373,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1E293B',
     marginRight: 4,
+    fontFamily: 'Inter_600SemiBold',
   },
   timeAgo: {
     fontSize: 12,
     color: '#64748B',
     marginTop: 2,
+    fontFamily: 'Inter_400Regular',
   },
   moreButton: {
     padding: 8,
@@ -305,11 +405,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    fontFamily: 'Inter_700Bold',
   },
   nutritionLabel: {
     fontSize: 12,
     color: '#FFFFFF',
     marginTop: 2,
+    fontFamily: 'Inter_400Regular',
   },
   postActions: {
     flexDirection: 'row',
@@ -326,6 +428,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     marginLeft: 4,
+    fontFamily: 'Inter_500Medium',
   },
   saveButton: {
     marginLeft: 'auto',
@@ -336,6 +439,7 @@ const styles = StyleSheet.create({
     color: '#334155',
     paddingHorizontal: 16,
     lineHeight: 20,
+    fontFamily: 'Inter_400Regular',
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -348,5 +452,6 @@ const styles = StyleSheet.create({
     color: '#3B82F6',
     marginRight: 8,
     marginBottom: 4,
+    fontFamily: 'Inter_500Medium',
   },
 });
