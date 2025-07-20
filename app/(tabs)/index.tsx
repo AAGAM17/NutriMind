@@ -166,7 +166,7 @@ export default function FeedScreen() {
         end={{ x: 1, y: 0 }}
         style={styles.header}
       >
-        <Text style={styles.appName}>NutriMind</Text>
+        <Text style={styles.appName}>NutriMindd</Text>
         <TouchableOpacity style={styles.notificationButton}>
           <IconSymbol name="bell" size={24} color="#FFFFFF" />
         </TouchableOpacity>
@@ -184,7 +184,7 @@ export default function FeedScreen() {
         />
       </View>
 
-      {/* Feed */}
+      {/* Feedss */}
       <ScrollView
         style={styles.feed}
         refreshControl={

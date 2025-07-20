@@ -1,38 +1,25 @@
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { Picker } from '@react-native-picker/picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
-    RefreshControl,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Easing,
+  Linking,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
-interface Suggestion {
-  id: string;
-  type: 'meal' | 'nutrition' | 'lifestyle' | 'goal';
-  title: string;
-  description: string;
-  icon: string;
-  color: string;
-  priority: 'high' | 'medium' | 'low';
-  actionable: boolean;
-}
+// Mock data here ...
+// Keep your mockGoals and mockSuggestions here (unchanged for brevity)
 
-interface Goal {
-  id: string;
-  title: string;
-  current: number;
-  target: number;
-  unit: string;
-  progress: number;
-  icon: string;
-  color: string;
-}
-
+// Main component
 const mockSuggestions: Suggestion[] = [
   {
     id: '1',
@@ -116,23 +103,132 @@ const mockGoals: Goal[] = [
     progress: 92.5,
     icon: 'flame.fill',
     color: '#FFA726',
-  },
+  }]
+
+// NutriRoll templates and values
+const nutriTemplates = [
+  "🍎 Eat a {food_type}",
+  "💧 Drink {amount} of water",
+  "🧘 Take {duration} minutes to {relax_activity}",
+  "🚶 Do {steps} steps right now",
+  "📝 Write down {mental_tip}",
+  "🤸‍♂️ Do {exercise_count} {exercise}",
+  "😌 Take a break and {self_care}",
+  "🥣 Add a {nutrient_type} to your next meal",
+  "🦶 Try a {mobility_move}",
+  "📵 Unplug for {unplug_time} minutes",
+  "🌞 Get some sunlight for {duration} minutes",
+  "🧂 Use less salt in your next meal",
+  "🍵 Have a cup of {healthy_drink}",
+  "🧑‍🍳 Cook a meal with {ingredient}",
 ];
+const nutriValues = {
+  food_type: ["fruit", "veggie", "handful of nuts", "healthy snack", "whole grain"],
+  amount: ["a glass", "half a bottle", "250ml", "a big gulp", "a full bottle"],
+  duration: ["1", "2", "3", "5", "10", "15"],
+  relax_activity: ["breathe deeply", "stretch", "meditate", "close your eyes", "listen to music"],
+  steps: ["10", "15", "20", "30", "50", "100"],
+  mental_tip: ["something you're grateful for", "today’s top goal", "a positive thought", "a recent win"],
+  exercise_count: ["5", "10", "12", "15", "20"],
+  exercise: ["squats", "push-ups", "jumping jacks", "arm circles", "lunges"],
+  self_care: ["wash your face", "step outside", "drink tea", "hug yourself", "smile at yourself in the mirror"],
+  nutrient_type: ["protein", "fiber", "healthy fat", "colorful vegetable", "vitamin-rich food"],
+  mobility_move: ["ankle circles", "hip openers", "neck rolls", "wrist stretches"],
+  unplug_time: ["2", "5", "10", "15"],
+  healthy_drink: ["green tea", "herbal tea", "lemon water", "warm water"],
+  ingredient: ["spinach", "chickpeas", "avocado", "berries", "sweet potato"],
+};
+
+function getRandomFromArray<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function generateNutriTask() {
+  let template = getRandomFromArray(nutriTemplates);
+  return template.replace(/\{(.*?)\}/g, (_, key: string) => {
+    if (key in nutriValues) {
+      return getRandomFromArray(nutriValues[key as keyof typeof nutriValues]);
+    }
+    return key;
+  });
+}
 
 export default function SuggestionsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'meal' | 'nutrition' | 'lifestyle' | 'goal'>('all');
 
-  const onRefresh = React.useCallback(() => {
+  const [age, setAge] = useState('');
+  const [ageFocused, setAgeFocused] = useState(false);
+  const [gender, setGender] = useState('');
+  const [genderFocused, setGenderFocused] = useState(false);
+  const [diet, setDiet] = useState('');
+  const [dietFocused, setDietFocused] = useState(false);
+  const [goal, setGoal] = useState('');
+  const [goalFocused, setGoalFocused] = useState(false);
+  const [meals, setMeals] = useState<any[]>([]);
+  const [loadingMeals, setLoadingMeals] = useState(false);
+  const [medicalConditions, setMedicalConditions] = useState('');
+  const [nutriTask, setNutriTask] = useState(generateNutriTask());
+  const diceAnim = useState(new Animated.Value(0))[0];
+  const [rolling, setRolling] = useState(false);
+
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
       setRefreshing(false);
     }, 2000);
   }, []);
 
-  const filteredSuggestions = selectedCategory === 'all' 
-    ? mockSuggestions 
-    : mockSuggestions.filter(s => s.type === selectedCategory);
+  const rollDice = () => {
+    if (rolling) return;
+    setRolling(true);
+    Animated.sequence([
+      Animated.timing(diceAnim, {
+        toValue: 1,
+        duration: 700,
+        easing: Easing.bounce,
+        useNativeDriver: true,
+      }),
+      Animated.timing(diceAnim, {
+        toValue: 0,
+        duration: 0,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setNutriTask(generateNutriTask());
+      setRolling(false);
+    });
+  };
+
+  const fetchMealPlan = async () => {
+    if (!age || !gender || !goal) return;
+
+    setLoadingMeals(true);
+
+    let targetCalories = 2000;
+    if (goal === 'gain') targetCalories = 2500;
+    if (goal === 'loss') targetCalories = 1600;
+
+    try {
+      const res = await fetch(
+        `https://api.spoonacular.com/mealplanner/generate?timeFrame=day&targetCalories=${targetCalories}&diet=${diet}${medicalConditions ? `&exclude=${encodeURIComponent(medicalConditions)}` : ''}&apiKey=YOUR_SPOONACULAR_API_KEY_HERE`,
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+
+      const data = await res.json();
+      setMeals(data.meals || []);
+    } catch (error) {
+      console.error('Meal fetch failed', error);
+    }
+
+    setLoadingMeals(false);
+  };
+
+  const filteredSuggestions = selectedCategory === 'all'
+    ? mockSuggestions
+    : mockSuggestions.filter((s) => s.type === selectedCategory);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -158,11 +254,11 @@ export default function SuggestionsScreen() {
         <Text style={styles.goalPercentage}>{goal.progress}%</Text>
       </View>
       <View style={styles.progressBar}>
-        <View 
+        <View
           style={[
-            styles.progressFill, 
-            { width: `${goal.progress}%`, backgroundColor: goal.color }
-          ]} 
+            styles.progressFill,
+            { width: `${goal.progress}%`, backgroundColor: goal.color },
+          ]}
         />
       </View>
     </View>
@@ -196,8 +292,6 @@ export default function SuggestionsScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
-      {/* Header */}
       <LinearGradient
         colors={['#FF6B6B', '#4ECDC4']}
         start={{ x: 0, y: 0 }}
@@ -210,22 +304,56 @@ export default function SuggestionsScreen() {
 
       <ScrollView
         style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
       >
-        {/* Goals Section */}
+        {/* NutriRoll */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Today&apos;s Goals</Text>
+          <View style={styles.nutriRollCard}>
+            <LinearGradient
+              colors={['#FDE68A', '#FCA5A5', '#6EE7B7']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.nutriRollGradient}
+            >
+              <Text style={styles.nutriRollTitle}>NutriRoll: Roll the Dice for a Healthy Task!</Text>
+              <Animated.View
+                style={{
+                  marginVertical: 20,
+                  alignItems: 'center',
+                  transform: [
+                    {
+                      rotate: diceAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '720deg'],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                <TouchableOpacity
+                  onPress={rollDice}
+                  activeOpacity={0.7}
+                  style={styles.diceButton}
+                  disabled={rolling}
+                >
+                  <Text style={styles.diceEmoji}>🎲</Text>
+                </TouchableOpacity>
+              </Animated.View>
+              <Text style={styles.nutriTaskText}>{nutriTask}</Text>
+              <Text style={styles.nutriRollHint}>Tap the dice to get a new healthy challenge!</Text>
+            </LinearGradient>
+          </View>
+        </View>
+        {/* Goals */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Today's Goals</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.goalsContainer}>
-              {mockGoals.map(renderGoalCard)}
-            </View>
+            <View style={styles.goalsContainer}>{mockGoals.map(renderGoalCard)}</View>
           </ScrollView>
         </View>
 
-        {/* Filter Categories */}
+        {/* Filters */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Smart Suggestions</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -265,8 +393,136 @@ export default function SuggestionsScreen() {
         </View>
 
         {/* Suggestions */}
+        <View style={styles.section}>{filteredSuggestions.map(renderSuggestion)}</View>
+
+        {/* Meal Plan Form */}
         <View style={styles.section}>
-          {filteredSuggestions.map(renderSuggestion)}
+          <Text style={styles.sectionTitle}>Personalized Meal Plan</Text>
+          <View style={{ paddingHorizontal: 20 }}>
+            <Text>Age</Text>
+            <TextInput
+              style={[
+                styles.input,
+                ageFocused && styles.inputFocused,
+              ]}
+              value={age}
+              onChangeText={setAge}
+              keyboardType="numeric"
+              placeholder="Enter your age"
+              onFocus={() => setAgeFocused(true)}
+              onBlur={() => setAgeFocused(false)}
+            />
+
+            <Text>Gender</Text>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPressIn={() => setGenderFocused(true)}
+              onPressOut={() => setGenderFocused(false)}
+              style={[styles.input, genderFocused && styles.inputFocused]}
+            >
+              <Picker
+                selectedValue={gender}
+                onValueChange={setGender}
+                style={{ backgroundColor: 'transparent' }}
+                dropdownIconColor="#6366F1"
+              >
+                <Picker.Item label="Select gender" value="" />
+                <Picker.Item label="Male" value="male" />
+                <Picker.Item label="Female" value="female" />
+              </Picker>
+            </TouchableOpacity>
+
+            <Text>Dietary Preference</Text>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPressIn={() => setDietFocused(true)}
+              onPressOut={() => setDietFocused(false)}
+              style={[styles.input, dietFocused && styles.inputFocused]}
+            >
+              <Picker
+                selectedValue={diet}
+                onValueChange={setDiet}
+                style={{ backgroundColor: 'transparent' }}
+                dropdownIconColor="#6366F1"
+              >
+                <Picker.Item label="None" value="" />
+                <Picker.Item label="Vegetarian" value="vegetarian" />
+                <Picker.Item label="Vegan" value="vegan" />
+                <Picker.Item label="Paleo" value="paleo" />
+                <Picker.Item label="Ketogenic" value="ketogenic" />
+              </Picker>
+            </TouchableOpacity>
+
+            <Text>Fitness Goal</Text>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPressIn={() => setGoalFocused(true)}
+              onPressOut={() => setGoalFocused(false)}
+              style={[styles.input, goalFocused && styles.inputFocused]}
+            >
+              <Picker
+                selectedValue={goal}
+                onValueChange={setGoal}
+                style={{ backgroundColor: 'transparent' }}
+                dropdownIconColor="#6366F1"
+              >
+                <Picker.Item label="Select goal" value="" />
+                <Picker.Item label="Muscle Gain" value="gain" />
+                <Picker.Item label="Fat Loss" value="loss" />
+                <Picker.Item label="Maintenance" value="maintain" />
+                <Picker.Item label="Endurance" value="endurance" />
+                <Picker.Item label="Flexibility" value="flexibility" />
+                <Picker.Item label="General Health" value="health" />
+                <Picker.Item label="Sports Performance" value="sports" />
+                <Picker.Item label="Stress Reduction" value="stress" />
+                <Picker.Item label="Improve Sleep" value="sleep" />
+                <Picker.Item label="Increase Energy" value="energy" />
+                <Picker.Item label="Weight Gain" value="weight_gain" />
+                <Picker.Item label="Tone Up" value="tone" />
+                <Picker.Item label="Improve Mobility" value="mobility" />
+              </Picker>
+            </TouchableOpacity>
+
+            <Text style={{ marginTop: 16 }}>Medical Conditions (optional)</Text>
+            <TextInput
+              style={styles.input}
+              value={medicalConditions}
+              onChangeText={setMedicalConditions}
+              placeholder="e.g. diabetes, gluten intolerance, nut allergy"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <TouchableOpacity
+              style={[styles.actionButton, { marginTop: 10 }]}
+              onPress={fetchMealPlan}
+              disabled={loadingMeals}
+            >
+              <Text style={styles.actionButtonText}>
+                {loadingMeals ? 'Generating...' : 'Get Meal Plan'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Meal Results */}
+          {meals.length > 0 && (
+            <View style={{ marginTop: 20 }}>
+              {meals.map((meal) => (
+                <View key={meal.id} style={styles.suggestionCard}>
+                  <Text style={styles.suggestionTitle}>{meal.title}</Text>
+                  <Text style={styles.suggestionDescription}>
+                    Ready in {meal.readyInMinutes} mins | Servings: {meal.servings}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => Linking.openURL(meal.sourceUrl)}
+                    style={[styles.actionButton, { marginTop: 10 }]}
+                  >
+                    <Text style={styles.actionButtonText}>View Recipe</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* AI Insights */}
@@ -281,7 +537,7 @@ export default function SuggestionsScreen() {
               <IconSymbol name="brain" size={30} color="#FFFFFF" />
               <Text style={styles.insightsTitle}>AI Insights</Text>
               <Text style={styles.insightsDescription}>
-                Based on your recent meals and activity, your nutrition consistency has improved by 23% this week. Keep focusing on protein timing for better results!
+                Based on your recent meals and activity, your nutrition consistency has improved by 23% this week.
               </Text>
               <TouchableOpacity style={styles.insightsButton}>
                 <Text style={styles.insightsButtonText}>View Detailed Report</Text>
@@ -293,6 +549,9 @@ export default function SuggestionsScreen() {
     </View>
   );
 }
+
+// 👇 Your styles stay unchanged
+
 
 const styles = StyleSheet.create({
   container: {
@@ -400,6 +659,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
+  input: {
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    fontSize: 16,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+    elevation: 4,
+    marginVertical: 12,
+    color: '#1E293B',
+    transitionProperty: 'border-color, box-shadow',
+    transitionDuration: '0.2s',
+  },
+  inputFocused: {
+    borderColor: '#6366F1',
+    shadowColor: '#6366F1',
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+
   filterButtonActive: {
     backgroundColor: '#FF6B6B',
     borderColor: '#FF6B6B',
@@ -521,5 +806,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  nutriRollCard: {
+    marginHorizontal: 20,
+    marginTop: 20,
+    borderRadius: 22,
+    overflow: 'hidden',
+    marginBottom: 10,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  nutriRollGradient: {
+    padding: 28,
+    alignItems: 'center',
+  },
+  nutriRollTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 10,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  diceButton: {
+    backgroundColor: '#FFFDEB',
+    borderRadius: 40,
+    width: 64,
+    height: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: 10,
+  },
+  diceEmoji: {
+    fontSize: 38,
+  },
+  nutriTaskText: {
+    fontSize: 18,
+    color: '#1E293B',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
+    marginHorizontal: 10,
+  },
+  nutriRollHint: {
+    fontSize: 13,
+    color: '#64748B',
+    opacity: 0.8,
+    marginTop: 6,
+    textAlign: 'center',
   },
 });
