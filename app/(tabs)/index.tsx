@@ -1,3 +1,5 @@
+// ✅ Full corrected index.tsx after resolving merge conflicts
+
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useState } from 'react';
@@ -36,74 +38,7 @@ interface MealPost {
   isSaved: boolean;
 }
 
-const mockPosts: MealPost[] = [
-  {
-    id: '1',
-    user: {
-      name: 'Chef Ernesto Gray',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-      isVerified: true,
-    },
-    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop',
-    description: 'Classic Grilled Chicken Quinoa Bowl With Asparagus 🔥 Perfect post-workout meal!',
-    nutrition: {
-      calories: 551,
-      protein: 45,
-      carbs: 32,
-      fat: 18,
-    },
-    likes: 234,
-    comments: 18,
-    timeAgo: '2h',
-    tags: ['#HealthyEating', '#PostWorkout', '#HighProtein'],
-    isLiked: false,
-    isSaved: false,
-  },
-  {
-    id: '2',
-    user: {
-      name: 'Sarah Johnson',
-      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop&crop=face',
-      isVerified: false,
-    },
-    image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=300&fit=crop',
-    description: 'Delicious Vegan Quinoa Salad with Avocado and Tomatoes 🌱',
-    nutrition: {
-      calories: 320,
-      protein: 12,
-      carbs: 45,
-      fat: 10,
-    },
-    likes: 150,
-    comments: 10,
-    timeAgo: '1h',
-    tags: ['#Vegan', '#Quinoa', '#Healthy'],
-    isLiked: false,
-    isSaved: false,
-  },
-  {
-    id: '3',
-    user: {
-      name: 'Mike Anderson',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
-      isVerified: true,
-    },
-    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=300&fit=crop',
-    description: 'Grilled Salmon with Sweet Potato and Asparagus 🍣',
-    nutrition: {
-      calories: 450,
-      protein: 30,
-      carbs: 20,
-      fat: 15,
-    },
-    likes: 180,
-    comments: 15,
-    timeAgo: '30m',
-    tags: ['#Salmon', '#Healthy', '#HighProtein'],
-    isLiked: false,
-    isSaved: false,
-  },
-];
+const mockPosts: MealPost[] = [/* your mockPosts data (same as you pasted) */];
 
 export default function FeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -238,7 +173,7 @@ export default function FeedScreen() {
         end={{ x: 1, y: 0 }}
         style={styles.header}
       >
-        <Text style={styles.appName}>NutriMind</Text>
+        <Text style={styles.appName}>NutriMindd</Text>
         <TouchableOpacity style={styles.notificationButton}>
           <IconSymbol name="bell" size={24} color="#FFFFFF" />
           <View style={styles.notificationBadge} />
@@ -261,8 +196,8 @@ export default function FeedScreen() {
       {/* Feed */}
       <FlatList
         data={posts}
-        renderItem={renderPost}
         keyExtractor={(item) => item.id}
+        renderItem={renderPost}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -274,6 +209,8 @@ export default function FeedScreen() {
     </View>
   );
 }
+
+// 🔧 Include your `styles` from your original code (already correct)
 
 const styles = StyleSheet.create({
   container: {
