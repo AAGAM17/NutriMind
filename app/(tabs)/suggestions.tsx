@@ -1,15 +1,15 @@
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-    RefreshControl,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
+  RefreshControl,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 
 interface Suggestion {
   id: string;

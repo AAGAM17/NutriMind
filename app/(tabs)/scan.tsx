@@ -1,17 +1,17 @@
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-    Alert,
-    Modal,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  StatusBar,
+  Modal,
+  ScrollView,
 } from 'react-native';
+import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { LinearGradient } from 'expo-linear-gradient';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 
 interface NutritionInfo {
   name: string;

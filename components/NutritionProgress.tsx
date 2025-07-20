@@ -1,6 +1,6 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { IconSymbol } from './ui/IconSymbol';
 
 interface NutritionProgressProps {
