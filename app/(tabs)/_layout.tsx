@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Link, Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
 
@@ -54,10 +54,14 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="add-meal"
+        name="create-post"  // Changed from "add-meal"
         options={{
-          title: 'Add Meal',
-          tabBarIcon: ({ color }) => <IconSymbol size={24} name="plus.circle.fill" color={color} />,
+          title: 'Create',
+          tabBarIcon: ({ color }) => (
+            <Link href="/create-post" asChild>
+              <IconSymbol size={24} name="plus.circle.fill" color={color} />
+            </Link>
+          ),
         }}
       />
       <Tabs.Screen

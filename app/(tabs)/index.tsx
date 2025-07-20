@@ -3,76 +3,102 @@ import { HelloWave } from '@/components/HelloWave';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
+  FlatList,
   Image,
   RefreshControl,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import { fetchMeals } from '../../lib/supabase';
+import { dummyPosts } from '../constants/dummyData';
+
+interface MealPost {
+  id: string;
+  user: {
+    name: string;
+    avatar: string;
+    isVerified: boolean;
+  };
+  image: string;
+  description: string;
+  nutrition: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  likes: number;
+  comments: number;
+  timeAgo: string;
+  tags: string[];
+  isLiked: boolean;
+  isSaved: boolean;
+}
 
 export default function FeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [meals, setMeals] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [posts, setPosts] = useState<MealPost[]>(dummyPosts);
   const router = useRouter();
 
-  const loadMeals = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchMeals();
-      console.log('Fetched meals:', data);
-      setMeals(data || []);
-    } catch (e: any) {
-      setError(e.message || 'Failed to load meals');
-      setMeals([]);
-      console.error('Error fetching meals:', e);
-    } finally {
-      setLoading(false);
-      console.log('Loading set to false');
-    }
-  };
-
-  useEffect(() => {
-    loadMeals();
-  }, []);
-
-  useEffect(() => {
-    console.log('Meals data:', meals);
-  }, [meals]);
-
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
-    loadMeals().finally(() => setRefreshing(false));
+    // Simulate refresh
+    setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
-  const renderNutritionBadge = (label: string, value: number, unit: string, color: string) => (
-    <View style={[styles.nutritionBadge, { backgroundColor: color }]}> 
-      <Text style={styles.nutritionValue}>{value}{unit}</Text>
-      <Text style={styles.nutritionLabel}>{label}</Text>
-    </View>
+  const handleLike = useCallback((postId: string) => {
+    setPosts(prevPosts =>
+      prevPosts.map(post =>
+        post.id === postId
+          ? {
+              ...post,
+              isLiked: !post.isLiked,
+              likes: post.isLiked ? post.likes - 1 : post.likes + 1
+            }
+          : post
+      )
+    );
+  }, []);
+
+  const handleSave = useCallback((postId: string) => {
+    setPosts(prevPosts =>
+      prevPosts.map(post =>
+        post.id === postId
+          ? { ...post, isSaved: !post.isSaved }
+          : post
+      )
+    );
+  }, []);
+
+  const renderNutritionBadge = useCallback(
+    (label: string, value: number, unit: string, color: string) => (
+      <View style={[styles.nutritionBadge, { backgroundColor: color }]}> 
+        <Text style={styles.nutritionValue}>{value}{unit}</Text>
+        <Text style={styles.nutritionLabel}>{label}</Text>
+      </View>
+    ),
+    []
   );
 
-  const renderPost = (post: any) => (
-    <View key={post.id} style={styles.postContainer}>
+  const renderPost = useCallback(({ item }: { item: MealPost }) => (
+    <View style={styles.postContainer}>
       {/* User Header */}
       <View style={styles.userHeader}>
-        <Image source={{ uri: post.users?.avatar_url || '' }} style={styles.avatar} />
+        <Image source={{ uri: item.user.avatar }} style={styles.avatar} />
         <View style={styles.userInfo}>
           <View style={styles.userNameRow}>
-            <Text style={styles.userName}>{post.users?.name || 'Unknown'}</Text>
+            <Text style={styles.userName}>{item.user.name}</Text>
+            {item.user.isVerified && (
+              <IconSymbol name="checkmark.seal.fill" size={16} color="#3B82F6" />
+            )}
           </View>
-          <Text style={styles.timeAgo}>{post.created_at ? new Date(post.created_at).toLocaleString() : ''}</Text>
+          <Text style={styles.timeAgo}>{item.timeAgo}</Text>
         </View>
         <TouchableOpacity style={styles.moreButton}>
           <IconSymbol name="ellipsis" size={20} color="#64748B" />
@@ -80,38 +106,60 @@ export default function FeedScreen() {
       </View>
 
       {/* Meal Image */}
-      <Image source={{ uri: post.image_url || '' }} style={styles.mealImage} />
+      <Image source={{ uri: item.image }} style={styles.mealImage} />
 
       {/* Nutrition Info */}
       <View style={styles.nutritionContainer}>
-        {renderNutritionBadge('Protein', post.protein, 'g', '#FF6B6B')}
-        {renderNutritionBadge('Fat', post.fat, 'g', '#4ECDC4')}
-        {renderNutritionBadge('Carbs', post.carbs, 'g', '#45B7D1')}
-        {renderNutritionBadge('Calories', post.calories, '', '#FFA726')}
+        {renderNutritionBadge('Protein', item.nutrition.protein, 'g', '#FF6B6B')}
+        {renderNutritionBadge('Fat', item.nutrition.fat, 'g', '#4ECDC4')}
+        {renderNutritionBadge('Carbs', item.nutrition.carbs, 'g', '#45B7D1')}
+        {renderNutritionBadge('Calories', item.nutrition.calories, '', '#FFA726')}
       </View>
 
       {/* Post Actions */}
       <View style={styles.postActions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <IconSymbol name="heart" size={24} color="#FF6B6B" />
-          <Text style={styles.actionText}>0</Text>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => handleLike(item.id)}
+        >
+          <IconSymbol 
+            name={item.isLiked ? "heart.fill" : "heart"} 
+            size={24} 
+            color={item.isLiked ? "#FF6B6B" : "#64748B"} 
+          />
+          <Text style={styles.actionText}>{item.likes}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <IconSymbol name="message" size={24} color="#64748B" />
-          <Text style={styles.actionText}>0</Text>
+          <Text style={styles.actionText}>{item.comments}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <IconSymbol name="paperplane" size={24} color="#64748B" />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.saveButton]}>
-          <IconSymbol name="bookmark" size={24} color="#64748B" />
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.saveButton]}
+          onPress={() => handleSave(item.id)}
+        >
+          <IconSymbol 
+            name={item.isSaved ? "bookmark.fill" : "bookmark"} 
+            size={24} 
+            color="#64748B" 
+          />
         </TouchableOpacity>
       </View>
 
       {/* Post Description */}
-      <Text style={styles.postDescription}>{post.description}</Text>
+      <Text style={styles.postDescription}>{item.description}</Text>
+      {/* Tags */}
+      <View style={styles.tagsContainer}>
+        {item.tags.map((tag, index) => (
+          <TouchableOpacity key={index}>
+            <Text style={styles.tag}>{tag}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
-  );
+  ), [handleLike, handleSave, renderNutritionBadge]);
 
   return (
     <View style={styles.container}>
@@ -126,6 +174,7 @@ export default function FeedScreen() {
         <Text style={styles.appName}>NutriMindd</Text>
         <TouchableOpacity style={styles.notificationButton}>
           <IconSymbol name="bell" size={24} color="#FFFFFF" />
+          <View style={styles.notificationBadge} />
         </TouchableOpacity>
       </LinearGradient>
       {/* Animated Hello Wave Greeting */}
@@ -148,30 +197,27 @@ export default function FeedScreen() {
           placeholderTextColor="#94A3B8"
           value={searchText}
           onChangeText={setSearchText}
+          returnKeyType="search"
         />
       </View>
       {/* Feed */}
-      {error && (
-        <Text style={{ color: 'red', textAlign: 'center', marginTop: 32 }}>{error}</Text>
-      )}
-      {loading && !error ? (
-        <ActivityIndicator size="large" color="#FF6B6B" style={{ marginTop: 32 }} />
-      ) : !error && meals.length === 0 ? (
-        <Text style={{ textAlign: 'center', marginTop: 32 }}>No meals found.</Text>
-      ) : !error && (
-        <ScrollView
-          style={styles.feed}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          showsVerticalScrollIndicator={false}
-        >
-          {meals.map(renderPost)}
-        </ScrollView>
-      )}
+      <FlatList
+        data={posts}
+        keyExtractor={(item) => item.id}
+        renderItem={renderPost}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.feedContent}
+        ListHeaderComponent={<View style={styles.listHeader} />}
+        ListFooterComponent={<View style={styles.listFooter} />}
+      />
     </View>
   );
 }
+
+// 🔧 Include your `styles` from your original code (already correct)
 
 const styles = StyleSheet.create({
   container: {
@@ -190,9 +236,20 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    fontFamily: 'Inter_700Bold',
   },
   notificationButton: {
     padding: 8,
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFD700',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -213,19 +270,29 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 16,
     color: '#1E293B',
+    fontFamily: 'Inter_400Regular',
   },
-  feed: {
-    flex: 1,
+  feedContent: {
+    paddingBottom: 16,
+  },
+  listHeader: {
+    height: 8,
+  },
+  listFooter: {
+    height: 32,
   },
   postContainer: {
     backgroundColor: '#FFFFFF',
     marginBottom: 16,
     paddingBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   userHeader: {
     flexDirection: 'row',
@@ -250,11 +317,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1E293B',
     marginRight: 4,
+    fontFamily: 'Inter_600SemiBold',
   },
   timeAgo: {
     fontSize: 12,
     color: '#64748B',
     marginTop: 2,
+    fontFamily: 'Inter_400Regular',
   },
   moreButton: {
     padding: 8,
@@ -280,11 +349,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    fontFamily: 'Inter_700Bold',
   },
   nutritionLabel: {
     fontSize: 12,
     color: '#FFFFFF',
     marginTop: 2,
+    fontFamily: 'Inter_400Regular',
   },
   postActions: {
     flexDirection: 'row',
@@ -301,6 +372,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     marginLeft: 4,
+    fontFamily: 'Inter_500Medium',
   },
   saveButton: {
     marginLeft: 'auto',
@@ -311,6 +383,7 @@ const styles = StyleSheet.create({
     color: '#334155',
     paddingHorizontal: 16,
     lineHeight: 20,
+    fontFamily: 'Inter_400Regular',
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -323,5 +396,6 @@ const styles = StyleSheet.create({
     color: '#3B82F6',
     marginRight: 8,
     marginBottom: 4,
+    fontFamily: 'Inter_500Medium',
   },
 });
